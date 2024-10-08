@@ -1,6 +1,6 @@
 import asyncio
-from node import Node
-from message import Message
+from SecondITR.node2 import Node
+from FirstITR.message import Message
 
 """Test 1"""
 print("TEST 1: Staring from lowest ID")
