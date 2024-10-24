@@ -21,7 +21,7 @@ async def setup_nodes(i):
     #await asyncio.sleep(12)
     objs[i-1].disableNode()
     await objs[0].checkNode(objs[i-1])
-    asyncio.sleep(10)
+    
     while(not objs[i-2].isLeader):
         await asyncio.sleep(1)
     await asyncio.sleep(4)
@@ -42,7 +42,7 @@ async def setup_nodes(i):
 if __name__ == '__main__':
     try:
         # change the number of nodes for differnt tests.
-        asyncio.run(setup_nodes(100))
+        asyncio.run(setup_nodes(60))
     except RuntimeError as e:
         # If the event loop is already running, use create_task to handle it
         if str(e) == "asyncio.run() cannot be called from a running event loop":
