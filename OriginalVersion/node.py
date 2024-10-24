@@ -1,6 +1,7 @@
 import asyncio
 from message import Message
 import time
+import random
 
 class Node:
     """Initialization"""
@@ -16,7 +17,7 @@ class Node:
         self.gotResponse = False
         self.nr_msg = nr_msg
         self.electionInProg = False
-        self.concurent_tasks = asyncio.Semaphore(10)
+        
 
         if len(self.nodes) == 0:
             self.isLeader()
@@ -46,7 +47,7 @@ class Node:
     # Handle incoming connections (asynchronously)
     async def handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         try:
-            data = await asyncio.wait_for(reader.read(1024), timeout=10)
+            data = await reader.read(1024)
             message = data.decode()
             if message:
                 msg_obj = Message.from_json(message)  # Assuming Message class has a from_json method
@@ -66,23 +67,23 @@ class Node:
         for node in self.nodes:
             if node.id == reciever_id:
                 try:
-                    async with self.concurent_tasks:
-                        try:
-                            reader, writer = await asyncio.wait_for(asyncio.open_connection('127.0.0.1', node.port), timeout=10)
-                        except asyncio.TimeoutError:
-                            print(f"Connection to Node {node.id} timed out.")
-                            return
-                        message = Message(self.id, node.id, message_type)
-                        writer.write(message.to_json().encode())
-                        try:
-                            # Apply a timeout to writer.drain() as well
-                            await asyncio.wait_for(writer.drain(), timeout=10)
-                            print(f"Message sent: {message}")
-                        except asyncio.TimeoutError:
-                            print(f"Writing to Node {node.id} timed out.")
-                        writer.close()
-                        await writer.wait_closed()
-                        self.nr_msg += 1
+                    
+                    try:
+                        reader, writer = await asyncio.open_connection('127.0.0.1', node.port)
+                    except asyncio.TimeoutError:
+                        print(f"Connection to Node {node.id} timed out.")
+                        return
+                    message = Message(self.id, node.id, message_type)
+                    writer.write(message.to_json().encode())
+                    try:
+                        # Apply a timeout to writer.drain() as well
+                        await writer.drain()
+                        print(f"Message sent: {message}")
+                    except asyncio.TimeoutError:
+                        print(f"Writing to Node {node.id} timed out.")
+                    writer.close()
+                    await writer.wait_closed()
+                    self.nr_msg += 1
                 except Exception as e:
                     print(f"Failed to send message to Node {reciever_id}: {e}")
                     
@@ -119,14 +120,18 @@ class Node:
         print(f"Message received: {message}")
         if message.message_type == "Election":
             if message.sender_id < self.id:
+                
                 await self.sendMessage(message.sender_id, "Ok")
-                if (not self.electionInProg):
+                if (self.electionInProg == False):
+                    self.electionInProg = True
+                    await asyncio.sleep(random.uniform(0.1, 1.0))
                     await self.startElection()
         elif message.message_type == "Ok":
             self.ok_recieved = True
         elif message.message_type == "Coordinator":
             self.isLeader = False
             self.leaderID = message.sender_id
+            await asyncio.sleep(3)
             self.ok_recieved = False
             self.electionInProg = False
         elif message.message_type == "CheckNode":
@@ -138,7 +143,7 @@ class Node:
     async def startElection(self):
         if self.isDisabled or self.ok_recieved:
             return
-        self.electionInProg = True
+        
         print("Node "+str(self.id)+" is starting election")
         for node in self.nodes:
             if node.id > self.id:
@@ -147,12 +152,13 @@ class Node:
         #Timeout
         await asyncio.sleep(2)
         if self.ok_recieved:
-            pass
+            return
         else:
             await self.IsLeader()
 
     """Setting Coordinator"""
     async def IsLeader(self):
+        self.electionInProg = False
         if self.isLeader:
             return
         self.isLeader = True
