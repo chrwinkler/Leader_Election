@@ -11,10 +11,12 @@ class Node:
         self.nodes = nodes
         self.port = port  # Node-specific port for socket communication
         nodes.append(self)
+        nodes.sort(key=lambda n: n.id, reverse=True)
         self.ok_recieved = False
         self.isDisabled = False
         self.gotResponse = False
         self.nr_msg = nr_msg
+        self.electionInProg = False
 
         if len(self.nodes) == 0:
             self.isLeader()
@@ -102,33 +104,45 @@ class Node:
         if message.message_type == "Election":
             if message.sender_id < self.id:
                 await self.sendMessage(message.sender_id, "Ok")
-                await self.startElection()
+                if (not self.electionInProg):
+                    await self.startElection()
         elif message.message_type == "Ok":
             self.ok_recieved = True
         elif message.message_type == "Coordinator":
             self.isLeader = False
             self.leaderID = message.sender_id
+            self.ok_recieved = False
+            self.electionInProg = False
         elif message.message_type == "CheckNode":
             await self.sendMessage(message.sender_id, "RESPONSE")
         elif message.message_type == "RESPONSE":
             self.gotResponse = True
 
-    """Election"""
+    """Starting Election"""
     async def startElection(self):
-        if self.isDisabled:
+        if self.isDisabled or self.ok_recieved:
             return
+        self.electionInProg = True
         print("Node "+str(self.id)+" is starting election")
-        for node in self.nodes:
-            if node.id > self.id:
-                asyncio.create_task(self.sendMessage(node.id, "Election"))
-        # Timeout
+        nlen = len(self.nodes)
+        if nlen > 30:
+            bound = nlen / 4
+        elif nlen > 100:
+            bound = nlen / 10
+        else:
+            bound = nlen / 2
+        
+        for i in range(int(bound)):
+            if self.nodes[i].id > self.id:
+                asyncio.create_task(self.sendMessage(self.nodes[i].id, "Election"))
+        #Timeout
         await asyncio.sleep(2)
         if self.ok_recieved:
-            self.ok_recieved = False
+            pass
         else:
             await self.IsLeader()
 
-    """NewCoordinator"""
+    """Setting Coordinator"""
     async def IsLeader(self):
         if self.isLeader:
             return
@@ -138,47 +152,3 @@ class Node:
         for node in self.nodes:
             if node != self:
                 await self.sendMessage(node.id, "Coordinator")
-
-# Simulation setup for nodes
-async def setup_nodes():
-    nodes = []
-    nr_msg = 0
-    # Create nodes with unique ports
-    node1 = Node(1, nodes,nr_msg, 5001)
-    node2 = Node(2, nodes,nr_msg, 5002)
-    node3 = Node(3, nodes,nr_msg, 5003)
-    node4 = Node(4, nodes,nr_msg, 5004)
-    print("Running test")
-    # Start the servers for all nodes
-    # Start servers for all nodes in the background
-    asyncio.create_task(node1.start_server())
-    asyncio.create_task(node2.start_server())
-    asyncio.create_task(node3.start_server())
-    asyncio.create_task(node4.start_server())
-    
-    await asyncio.sleep(5)
-    print("DISABLING NODE 4")
-    node4.disableNode()
-    await asyncio.sleep(3)
-    print("NODE 1 CHECKS NODE 4")
-    await node1.checkNode(node4)
-    await asyncio.sleep(5)
-    print("REPEARING NODE 4")
-    await node4.repairNode()
-     # Keep running the program for further testing
-    
-    await asyncio.sleep(5)
-    print("")
-    print(f"Nr of messages sent: {node1.nr_msg+node2.nr_msg+node3.nr_msg+node4.nr_msg}")
-    print("---------------------------------------------------------------------------")
-    return
-
-if __name__ == '__main__':
-    try:
-        asyncio.run(setup_nodes())
-    except RuntimeError as e:
-        # If the event loop is already running, use create_task to handle it
-        if str(e) == "asyncio.run() cannot be called from a running event loop":
-            loop = asyncio.get_event_loop()
-            loop.create_task(setup_nodes())
-            loop.run_forever()
