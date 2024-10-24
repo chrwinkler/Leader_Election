@@ -24,6 +24,7 @@ async def setup_nodes(i):
     asyncio.sleep(10)
     while(not objs[i-2].isLeader):
         await asyncio.sleep(1)
+    await asyncio.sleep(4)
     #await asyncio.sleep(10)
     print("")
     totMess = 0
