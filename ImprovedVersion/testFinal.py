@@ -4,10 +4,10 @@ from message import Message
 import time
 
 """
-    This is the final test for the Original version of the project.
+    This is the final test for the Imporved version of the project.
     we use it to check different scenarios and see the number of messages sent.
     scenarios: 10, 20, 40, 60, 80, 100, 120 nodes.
-    Results: 44, 139, 179, 344, 559, 824, 1139 messages sent.
+    Results: 100, 400, 1600, 3600, 6400, 10000, 14400 messages sent.
 """
 
 async def setup_nodes(i):
@@ -22,13 +22,17 @@ async def setup_nodes(i):
     
     print("Running test")
     
+    while(not objs[i-1].isLeader):
+        await asyncio.sleep(1)
     
-    
-    await asyncio.sleep(5)
+    await asyncio.sleep(4)
     objs[i-1].disableNode()
     await objs[0].checkNode(objs[i-1])
-
-    await asyncio.sleep(10)
+    
+    while(not objs[i-2].isLeader):
+        await asyncio.sleep(1)
+    await asyncio.sleep(4)
+    #await asyncio.sleep(10)
     print("")
     totMess = 0
     leader_id = 0
@@ -47,7 +51,7 @@ if __name__ == '__main__':
         '''
             Change the number of nodes for differnt tests.
         '''
-        asyncio.run(setup_nodes(120))
+        asyncio.run(setup_nodes(40))
         
     except RuntimeError as e:
         # If the event loop is already running, use create_task to handle it

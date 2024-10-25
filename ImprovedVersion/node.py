@@ -11,8 +11,8 @@ class Node:
         self.leaderID = None
         self.nodes = nodes
         self.port = port  # Node-specific port for socket communication
-        nodes.append(self)
-        nodes.sort(key=lambda n: n.id, reverse=True)
+        self.nodes.append(self)
+        self.nodes.sort(key=lambda n: n.id, reverse=True)
         self.ok_recieved = False
         self.isDisabled = False
         self.gotResponse = False
@@ -39,7 +39,7 @@ class Node:
 
     # Start the server to listen for messages
     async def start_server(self):
-        server = await asyncio.start_server(self.handle_connection, 'localhost', self.port)
+        server = await asyncio.start_server(self.handle_connection, '127.0.0.1', self.port)
         print(f"Node {self.id} is listening on port {self.port}")
         async with server:
             await server.serve_forever()
@@ -61,7 +61,7 @@ class Node:
         for node in self.nodes:
             if node.id == reciever_id:
                 try:
-                    reader, writer = await asyncio.open_connection('localhost', node.port)
+                    reader, writer = await asyncio.open_connection('127.0.0.1', node.port)
                     message = Message(self.id, node.id, message_type)
                     writer.write(message.to_json().encode())
                     await writer.drain()  # Ensure the message is sent
@@ -132,21 +132,37 @@ class Node:
         print("Node "+str(self.id)+" is starting election")
         nlen = len(self.nodes)
         if nlen >= 30:
-            bound = nlen / 4
+            bound = int(nlen / 5)
         elif nlen >= 100:
-            bound = nlen / 10
+            bound = int(nlen / 10)
         else:
-            bound = nlen / 2
-        
-        for i in range(int(bound)):
-            if self.nodes[i].id > self.id:
-                asyncio.create_task(self.sendMessage(self.nodes[i].id, "Election"))
-        #Timeout
-        await asyncio.sleep(2)
-        if self.ok_recieved:
-            pass
-        else:
-            await self.IsLeader()
+            bound = int(nlen / 2)
+        c = 0
+        selfInBound = False
+        while(self.nodes[c].id >= self.id):
+            if (self.ok_recieved):
+                return
+            if (self.nodes[bound].id < self.id):
+                selfInBound = True
+            for i in range(c,bound):
+                if self.nodes[i].id > self.id:
+                    asyncio.create_task(self.sendMessage(self.nodes[i].id, "Election"))
+                elif self.nodes[i].id == self.id:
+                    selfInBound = True
+            #Timeout
+            await asyncio.sleep(2)
+            if self.ok_recieved:
+                return
+            else:
+                if selfInBound:
+                    await self.IsLeader()
+                    return
+                c = bound
+                bound += bound
+                if bound > nlen:
+                    bound = nlen
+        #else:
+        await self.IsLeader()
 
     """Setting Coordinator"""
     async def IsLeader(self):
