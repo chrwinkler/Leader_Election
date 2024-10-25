@@ -3,6 +3,13 @@ import asyncio
 from message import Message
 import time
 
+"""
+    This is the final test for the Original version of the project.
+    we use it to check different scenarios and see the number of messages sent.
+    scenarios: 10, 20, 40, 60, 80, 100, 120 nodes.
+    Results: 100, 400, 1600, 3600, 6400, 10000, 14400 messages sent.
+"""
+
 async def setup_nodes(i):
     nodes = []
     nr_msg = 0

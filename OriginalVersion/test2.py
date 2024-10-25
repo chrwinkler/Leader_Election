@@ -3,15 +3,21 @@ import asyncio
 from message import Message
 import time
 
+"""
+    This test is used to to check if the system work in basic scenarios.
+    here we disable a node and check if the other nodes can detect it.
+    and count the number of messages sent.
+"""
+
 # Simulation setup for nodes
 async def setup_nodes():
     nodes = []
     nr_msg = 0
     # Create nodes with unique ports
-    node1 = Node(1, nodes,nr_msg, 5001)
-    node2 = Node(2, nodes,nr_msg, 5002)
-    node3 = Node(3, nodes,nr_msg, 5003)
-    node4 = Node(4, nodes,nr_msg, 5004)
+    node1 = Node(1, nodes, nr_msg, 5001)
+    node2 = Node(2, nodes, nr_msg, 5002)
+    node3 = Node(3, nodes, nr_msg, 5003)
+    node4 = Node(4, nodes, nr_msg, 5004)
     print("Running test")
     # Start the servers for all nodes
     # Start servers for all nodes in the background

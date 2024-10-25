@@ -1,15 +1,17 @@
+from node import Node
 import asyncio
-from SecondITR.node2 import Node
-from FirstITR.message import Message
+from message import Message
+import time
 
 """Test 1"""
 print("TEST 1: Staring from lowest ID")
 # Test setup
 nodes = []
+nr_msg = 0
 
-node1 = Node(1, nodes)
-node2 = Node(2, nodes)
-node3 = Node(3, nodes)
+node1 = Node(1, nodes, nr_msg, 5001)
+node2 = Node(2, nodes, nr_msg, 5002)
+node3 = Node(3, nodes, nr_msg, 5003)
 
 # Trigger election from the lowest ID node
 async def test_election(node):
@@ -27,8 +29,8 @@ print("TEST 1 FINISHED")
 """Test 2"""
 print("TEST 2: Staring from middle ID")
 #Test Setup
-node4 = Node(4, nodes)
-node5 = Node(5, nodes)
+node4 = Node(4, nodes, nr_msg, 5004)
+node5 = Node(5, nodes, nr_msg, 5001)
 
 
 #asyncio.run(test_election(node3))
