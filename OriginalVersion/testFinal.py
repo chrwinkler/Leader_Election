@@ -51,7 +51,7 @@ if __name__ == '__main__':
         '''
             Change the number of nodes for differnt tests.
         '''
-        asyncio.run(setup_nodes(100))
+        asyncio.run(setup_nodes(60))
         
     except RuntimeError as e:
         # If the event loop is already running, use create_task to handle it
