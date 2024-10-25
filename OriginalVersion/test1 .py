@@ -18,7 +18,8 @@ async def setup_nodes(node_count):
     await asyncio.sleep(2)
 
     return objs
-
+# Test 1 is irrelevant becourse that we implementet that highest id becomes the leader instantly.
+'''
 async def run_test1(nodes):
     print("")
     print("---------------------------------------------------------------------------")
@@ -35,7 +36,7 @@ async def run_test1(nodes):
     # Check which node became the leader
     for node in nodes:
         print(f"Node {node.id} is leader: {node.isLeader}, Leader ID: {node.leaderID}, Is disabled: {node.isDisabled}")
-
+'''
 async def run_test2(nodes):
     print("")
     print("---------------------------------------------------------------------------")
@@ -85,9 +86,30 @@ async def run_test3(nodes):
 async def main():
     # Setup nodes with a maximum of 5 nodes
     nodes = await setup_nodes(5)
-
-    await run_test1(nodes)
+    """
+    NOT IN USE
+    Test 1: Starting from lowest ID
+        no Node is disabled
+        Node 1 starts the election
+        Node 5 becomes the leader
+    """
+    # await run_test1(nodes)
+    
+    """
+    Test 2: Starting from middle ID
+        no Node is disabled
+        Node 3 starts the election
+        Node 5 becomes the leader
+    """
     await run_test2(nodes)
+    
+    """
+    Test 3: Leader is not answering
+        Node 5 is disabled
+        Node 2 checks the status of Node 5
+        Node 2 starts the election
+        Node 4 becomes the leader
+    """
     await run_test3(nodes)
 
 if __name__ == '__main__':
