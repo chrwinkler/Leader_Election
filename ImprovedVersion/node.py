@@ -4,7 +4,9 @@ import time
 import random
 
 class Node:
-    """Initialization"""
+    """
+        Initialization
+    """
     def __init__(self, id: int, nodes: list, nr_msg: int, port: int):
         self.id = id
         self.isLeader = False
@@ -97,35 +99,54 @@ class Node:
         self.isDisabled = False
         await self.isHighestID()
 
-    """Receiving Message"""
+    """
+        Receiving Message
+    """
     async def recieveMessage(self, message: Message):
         # Check if the node is disabled
         if self.isDisabled:
             return # Exit if the node cannot receive messages
+        
         print(f"Message received: {message}")
+        
+        #Process the received message
         if message.message_type == "Election":
+            # If the received message is an election message
             if message.sender_id < self.id:
-                
+                # Responnd with an "OK" message indicating that this node is still active
                 await self.sendMessage(message.sender_id, "Ok")
+                # Start a new election
                 if (self.electionInProg == False):
                     self.electionInProg = True
                     await asyncio.sleep(random.uniform(0.1, 1.0))
                     await self.startElection()
+                    
         elif message.message_type == "Ok":
+            # If the received message is an "OK" message
             self.ok_recieved = True
+            
         elif message.message_type == "Coordinator":
+            # If the received message is a "Coordinator" message
             self.isLeader = False
             self.leaderID = message.sender_id
             await asyncio.sleep(3)
             self.ok_recieved = False
             self.electionInProg = False
+            
         elif message.message_type == "CheckNode":
+            # If the received message is a "CheckNode" message
             await self.sendMessage(message.sender_id, "RESPONSE")
+            
         elif message.message_type == "RESPONSE":
+            # If the received message is a "RESPONSE" message
             self.gotResponse = True
 
-    '''Improved Version'''
-    """Starting Election"""
+    '''
+        Improved Version
+    '''
+    """
+        Starting Election
+    """
     async def startElection(self):
         # Check if the node is disabled
         if self.isDisabled or self.ok_recieved:
@@ -185,14 +206,23 @@ class Node:
         #else:
         await self.IsLeader()
 
-    """Setting Coordinator"""
+
+    """
+        Setting Coordinator
+    """
     async def IsLeader(self):
+        # Mark the election as finished
         self.electionInProg = False
+        
+        # Check if node is already the leader
         if self.isLeader:
-            return
+            return # Exit if the node is already the leader
+        
+        # Declare the node as the leader
         self.isLeader = True
         self.leaderID = self.id
 
+        # Notify all other nodes that this node is the new coordinator
         for node in self.nodes:
             if node != self:
                 await self.sendMessage(node.id, "Coordinator")
