@@ -128,7 +128,9 @@ class Node:
         self.isDisabled = False
         await self.isHighestID()
 
-    """Receiving Message"""
+    """
+        Receiving Message
+    """
     async def recieveMessage(self, message: Message):
         # Check if the node is disabled
         if self.isDisabled:
