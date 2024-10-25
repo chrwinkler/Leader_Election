@@ -7,7 +7,7 @@ import time
     This is the final test for the Original version of the project.
     we use it to check different scenarios and see the number of messages sent.
     scenarios: 10, 20, 40, 60, 80, 100, 120 nodes.
-    Results: 100, 400, 1600, 3600, 6400, 10000, 14400 messages sent.
+    Results: 44, 139, 179, 344, 559, 824, 1139 messages sent.
 """
 
 async def setup_nodes(i):
@@ -44,8 +44,11 @@ async def setup_nodes(i):
 
 if __name__ == '__main__':
     try:
-        # change the number of nodes for differnt tests.
+        '''
+            Change the number of nodes for differnt tests.
+        '''
         asyncio.run(setup_nodes(120))
+        
     except RuntimeError as e:
         # If the event loop is already running, use create_task to handle it
         if str(e) == "asyncio.run() cannot be called from a running event loop":
