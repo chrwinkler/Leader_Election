@@ -1,6 +1,7 @@
 import asyncio
 from message import Message
 import time
+import random
 
 class Node:
     """Initialization"""
@@ -103,14 +104,18 @@ class Node:
         print(f"Message received: {message}")
         if message.message_type == "Election":
             if message.sender_id < self.id:
+                
                 await self.sendMessage(message.sender_id, "Ok")
-                if (not self.electionInProg):
+                if (self.electionInProg == False):
+                    self.electionInProg = True
+                    await asyncio.sleep(random.uniform(0.1, 1.0))
                     await self.startElection()
         elif message.message_type == "Ok":
             self.ok_recieved = True
         elif message.message_type == "Coordinator":
             self.isLeader = False
             self.leaderID = message.sender_id
+            await asyncio.sleep(3)
             self.ok_recieved = False
             self.electionInProg = False
         elif message.message_type == "CheckNode":
@@ -118,6 +123,7 @@ class Node:
         elif message.message_type == "RESPONSE":
             self.gotResponse = True
 
+    '''Improved Version'''
     """Starting Election"""
     async def startElection(self):
         if self.isDisabled or self.ok_recieved:
@@ -125,9 +131,9 @@ class Node:
         self.electionInProg = True
         print("Node "+str(self.id)+" is starting election")
         nlen = len(self.nodes)
-        if nlen > 30:
+        if nlen >= 30:
             bound = nlen / 4
-        elif nlen > 100:
+        elif nlen >= 100:
             bound = nlen / 10
         else:
             bound = nlen / 2
@@ -144,6 +150,7 @@ class Node:
 
     """Setting Coordinator"""
     async def IsLeader(self):
+        self.electionInProg = False
         if self.isLeader:
             return
         self.isLeader = True

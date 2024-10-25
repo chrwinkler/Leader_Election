@@ -42,7 +42,7 @@ async def setup_nodes(i):
 if __name__ == '__main__':
     try:
         # change the number of nodes for differnt tests.
-        asyncio.run(setup_nodes(110))
+        asyncio.run(setup_nodes(120))
     except RuntimeError as e:
         # If the event loop is already running, use create_task to handle it
         if str(e) == "asyncio.run() cannot be called from a running event loop":
