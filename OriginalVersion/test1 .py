@@ -24,6 +24,7 @@ async def run_test1(nodes):
     print("---------------------------------------------------------------------------")
     print("")
     print("TEST 1: Starting from lowest ID")
+    print("")
     
     # Node 1 starts the election
     await nodes[0].startElection()  # Node 1 initiates the election
@@ -40,6 +41,7 @@ async def run_test2(nodes):
     print("---------------------------------------------------------------------------")
     print("")
     print("TEST 2: Starting from middle ID")
+    print("")
     
 
     # Reset leader states for all nodes
