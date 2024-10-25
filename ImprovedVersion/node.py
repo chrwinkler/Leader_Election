@@ -99,8 +99,9 @@ class Node:
 
     """Receiving Message"""
     async def recieveMessage(self, message: Message):
+        # Check if the node is disabled
         if self.isDisabled:
-            return
+            return # Exit if the node cannot receive messages
         print(f"Message received: {message}")
         if message.message_type == "Election":
             if message.sender_id < self.id:
@@ -126,39 +127,59 @@ class Node:
     '''Improved Version'''
     """Starting Election"""
     async def startElection(self):
+        # Check if the node is disabled
         if self.isDisabled or self.ok_recieved:
-            return
+            return # Exit if the node cannot start an election
+        
         self.electionInProg = True
         print("Node "+str(self.id)+" is starting election")
+        
+        # nlen is the total number of nodes
         nlen = len(self.nodes)
-        if nlen >= 30:
+        
+        # Determine the number of nodes to send the election message to
+        if nlen >= 30: # more then 30 nodes, then send to 1/5 of the nodes
             bound = int(nlen / 5)
-        elif nlen >= 100:
+        elif nlen >= 100: # more then 100 nodes, then send to 1/10 of the nodes
             bound = int(nlen / 10)
         else:
-            bound = int(nlen / 2)
+            bound = int(nlen / 2) # Orherwise send to half of the nodes
+            
         c = 0
-        selfInBound = False
+        selfInBound = False # Flag to check if the current node is in the bound range
+        
+        # Start sending election messages 
         while(self.nodes[c].id >= self.id):
             if (self.ok_recieved):
-                return
+                return # Exit if the node has received an "OK" message
+            
+            # Check if the current node is in the bound range
             if (self.nodes[bound].id < self.id):
                 selfInBound = True
+            
+            # Iterate over the range of nodes to send the election message to
             for i in range(c,bound):
                 if self.nodes[i].id > self.id:
                     asyncio.create_task(self.sendMessage(self.nodes[i].id, "Election"))
                 elif self.nodes[i].id == self.id:
                     selfInBound = True
+            
             #Timeout
             await asyncio.sleep(2)
+            
             if self.ok_recieved:
-                return
+                return # Exit if the node has received an "OK" message
             else:
+                # Check if the current node is in the bound range
                 if selfInBound:
-                    await self.IsLeader()
+                    await self.IsLeader() # Declare this node as the leader
                     return
+                
+                # Update the counters for next iteration
                 c = bound
                 bound += bound
+                
+                # Ensure that the bound does not exceed the total number of nodes
                 if bound > nlen:
                     bound = nlen
         #else:
