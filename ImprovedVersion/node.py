@@ -43,6 +43,7 @@ class Node:
     async def start_server(self):
         server = await asyncio.start_server(self.handle_connection, '127.0.0.1', self.port)
         print(f"Node {self.id} is listening on port {self.port}")
+        
         async with server:
             await server.serve_forever()
 
@@ -50,16 +51,20 @@ class Node:
     async def handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         data = await reader.read(1024)
         message = data.decode()
+        
         if message:
             msg_obj = Message.from_json(message)  # Assuming Message class has a from_json method
             await self.recieveMessage(msg_obj)
+        
         writer.close()
         await writer.wait_closed()
 
     # Send a message to a specific node using asyncio-compatible streams
     async def sendMessage(self, reciever_id: int, message_type):
+        # Check if the node is disabled
         if self.isDisabled:
-            return
+            return # Exit if the node cannot send messages
+        
         for node in self.nodes:
             if node.id == reciever_id:
                 try:
@@ -71,6 +76,7 @@ class Node:
                     writer.close()
                     await writer.wait_closed()
                     self.nr_msg += 1
+                
                 except Exception as e:
                     print(f"Failed to send message to Node {reciever_id}: {e}")
 
@@ -83,8 +89,10 @@ class Node:
             if not self.gotResponse:
                 print(f"No response from Node {node.id}. Starting election...")
                 await self.startElection()
+            
             else:
                 self.gotResponse = False  # Reset the response flag
+        
         except RuntimeError as e:
             print(f"RuntimeError encountered: {e}. Starting election...")
             await self.startElection()
